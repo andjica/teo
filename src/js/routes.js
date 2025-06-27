@@ -4,7 +4,7 @@ import AboutPage from '../pages/about.jsx';
 import FormPage from '../pages/form.jsx';
 import CatalogPage from '../pages/catalog.jsx';
 import ProductPage from '../pages/product.jsx';
-import SettingsPage from '../pages/settings.jsx';
+import SettingsPage from '../pages/Settings.jsx';
 import LoginPage from '../pages/login.jsx';
 import RegisterPage from '../pages/register.jsx';
 import AuctionsPage from '../pages/auctions.jsx';
@@ -13,6 +13,8 @@ import CheckoutPage from '../pages/checkout.jsx';
 import DynamicRoutePage from '../pages/dynamic-route.jsx';
 import RequestAndLoad from '../pages/request-and-load.jsx';
 import NotFoundPage from '../pages/404.jsx';
+import VerifyEmail from '../pages/verify-email.jsx';
+import VerifySuccess from '../pages/verify-success.jsx';
 
 var routes = [
   {
@@ -22,6 +24,14 @@ var routes = [
   {
     path: '/register/',
     component: RegisterPage,
+  },
+  {
+    path:'/verify-email/:id/:hash',
+    component: VerifyEmail,
+  },
+  {
+    path:'/verify-success/',
+    component: VerifySuccess,
   },
   {
     path: '/home/',

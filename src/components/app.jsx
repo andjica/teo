@@ -103,30 +103,30 @@ const MyApp = () => {
           {/* Tabbar for switching views-tabs */}
           <Toolbar tabbar icons bottom>
   <Link tabLink="#view-catalog">
-    <i class="icon custom-icon">
+    <i className="icon custom-icon">
     <img src="/assets/images/product.png" alt="brandnew" />
     </i>
-    <span class="tabbar-label">Brand New</span>
+    <span className="tabbar-label">Brand New</span>
   </Link>
 
   <Link tabLink="#view-auctions">
-    <i class="icon custom-icon">
+    <i className="icon custom-icon">
       <img src="/assets/images/auction.png" alt="Auctions" />
     </i>
-    <span class="tabbar-label">Auctions</span>
+    <span className="tabbar-label">Auctions</span>
   </Link>
 
   <Link tabLink="#view-home">
-    <i class="icon custom-icon">
+    <i className="icon custom-icon">
       <img src="/assets/images/second-hand.png" alt="2nd Hand" />
     </i>
-    <span class="tabbar-label">2nd Hand</span>
+    <span className="tabbar-label">2nd Hand</span>
   </Link>
 </Toolbar>
 
 
 
-          {/* Your main view/tab, should have "view-main" class. It also has "tabActive" prop */}
+          {/* Your main view/tab, should have "view-main" className. It also has "tabActive" prop */}
           <View id="view-login" main tab tabActive url="/login/" />
 
           {/* Catalog View */}
