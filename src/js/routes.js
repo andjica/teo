@@ -1,20 +1,20 @@
 
-import HomePage from '../pages/home.jsx';
+import HomePage from '../pages/Home.jsx';
 import AboutPage from '../pages/about.jsx';
 import FormPage from '../pages/form.jsx';
 import CatalogPage from '../pages/catalog.jsx';
 import ProductPage from '../pages/product.jsx';
 import SettingsPage from '../pages/Settings.jsx';
-import LoginPage from '../pages/login.jsx';
-import RegisterPage from '../pages/register.jsx';
+import LoginPage from '../pages/Login.jsx';
+import RegisterPage from '../pages/Register.jsx';
 import AuctionsPage from '../pages/auctions.jsx';
 import CheckoutPage from '../pages/checkout.jsx';
 
 import DynamicRoutePage from '../pages/dynamic-route.jsx';
 import RequestAndLoad from '../pages/request-and-load.jsx';
 import NotFoundPage from '../pages/404.jsx';
-import VerifyEmail from '../pages/verify-email.jsx';
-import VerifySuccess from '../pages/verify-success.jsx';
+import VerifyEmail from '../pages/VerifyEmail.jsx';
+import VerifySuccess from '../pages/VerifySuccess.jsx';
 
 var routes = [
   {

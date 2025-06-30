@@ -37,16 +37,10 @@ const MyApp = () => {
   const f7params = {
     name: 'Teo', // App name
       theme: 'auto', // Automatic theme detection
-
-
-
-
       // App store
       store: store,
       // App routes
       routes: routes,
-
-
 
       // Input settings
       input: {
@@ -101,30 +95,6 @@ const MyApp = () => {
         {/* Views/Tabs container */}
         <Views tabs className="safe-areas">
           {/* Tabbar for switching views-tabs */}
-          <Toolbar tabbar icons bottom>
-  <Link tabLink="#view-catalog">
-    <i className="icon custom-icon">
-    <img src="/assets/images/product.png" alt="brandnew" />
-    </i>
-    <span className="tabbar-label">Brand New</span>
-  </Link>
-
-  <Link tabLink="#view-auctions">
-    <i className="icon custom-icon">
-      <img src="/assets/images/auction.png" alt="Auctions" />
-    </i>
-    <span className="tabbar-label">Auctions</span>
-  </Link>
-
-  <Link tabLink="#view-home">
-    <i className="icon custom-icon">
-      <img src="/assets/images/second-hand.png" alt="2nd Hand" />
-    </i>
-    <span className="tabbar-label">2nd Hand</span>
-  </Link>
-</Toolbar>
-
-
 
           {/* Your main view/tab, should have "view-main" className. It also has "tabActive" prop */}
           <View id="view-login" main tab tabActive url="/login/" />

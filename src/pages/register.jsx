@@ -1,28 +1,22 @@
 import { Button, f7, Page } from "framework7-react";
-import React, { useEffect, useState } from "react";
-import logo from "../assets/images/logo.png"; // prilagodi putanju ako je drugačije
-
+import { useState } from "react";
+import logo from "../assets/images/logo.png";
+import { post } from "@/js/helper/api";
+import { validationUserRegister } from "@/js/helper/form-validation/user-register";
 
 const Register = ({ f7router }) => {
   const [form, setForm] = useState({
-    first_name:"",
-    last_name:"",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     errors: {
-      first_name:"",
-      last_name:"",
+      first_name: "",
+      last_name: "",
       email: "",
       password: "",
     },
   });
-
-  // useEffect(() => {
-  //   document.body.classList.add('no-toolbar');
-  //   return () => {
-  //     document.body.classList.remove('no-toolbar');
-  //   };
-  // }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,97 +30,58 @@ const Register = ({ f7router }) => {
   const handleRegister = async () => {
     const { first_name, last_name, email, password } = form;
 
-    const newErrors = {
-      first_name:"",
-      last_name:"",
-      email: "",
-      password: "",
-    };
+    const errors = validationUserRegister({
+      first_name,
+      last_name,
+      email,
+      password,
+    });
 
-    let hasError = false;
-
-    if (!first_name) {
-      newErrors.first_name = "First Name is required.";
-      hasError = true;
-    }
-
-    if (!last_name) {
-      newErrors.last_name = "Last Name is required.";
-      hasError = true;
-    }
-
-    if (!email) {
-      newErrors.email = "Email is required.";
-      hasError = true;
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        newErrors.email = "Email is invalid.";
-        hasError = true;
-      }
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required.";
-      hasError = true;
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";
-      hasError = true;
-    }
-
-    if (hasError) {
-      setForm((prev) => ({ ...prev, errors: newErrors }));
+    if (Object.keys(errors).length > 0) {
+      setForm((prev) => ({ ...prev, errors }));
       return;
     }
 
     try {
       f7.dialog.preloader("Registering...");
 
-      const response = await fetch("http://localhost:8000/api/register", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_name,
-          last_name,
-          email,
-          password,
-          role_id: 4,
-        }),
+      // ✅ API poziv bez nepotrebnog .json()
+      const data = await post("register", {
+        first_name,
+        last_name,
+        email,
+        password,
+        role_id: 4,
       });
 
-      const data = await response.json();
       f7.dialog.close();
 
-      if (!response.ok) {
-        if (data.errors) {
-          const apiErrors = {
-            first_name: data.errors.first_name?.[0] || "",
-            last_name: data.errors.last_name?.[0] || "",
-            email: data.errors.email?.[0] || "",
-            password: data.errors.password?.[0] || "",
-          };
-          setForm((prev) => ({ ...prev, errors: apiErrors }));
-        } else {
-          f7.dialog.alert(data.message || "Registration failed.");
-        }
-        return;
-      }
-
-      // ✅ Uspešno
-      console.log("Register data",data);
+      // ✅ Sačuvaj podatke
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("is_finised_profile", 0);
+      localStorage.setItem("is_finished_profile", "0");
+
       const id = data.user.id;
-      const hash = data.user.email_verification_token;
+      const hash = data.verification_hash; // proveri da li se vraća ovo ili drugačije na backendu
+
       f7router.navigate(`/verify-email/${id}/${hash}`);
     } catch (error) {
       f7.dialog.close();
-      f7.dialog.alert("Server error. Please try again later.");
-      console.error("Register error:", error);
+
+      if (error.message.includes("422")) {
+        // Laravel validation error
+        const err = JSON.parse(error.message);
+        const apiErrors = {
+          first_name: err.errors?.first_name?.[0] || "",
+          last_name: err.errors?.last_name?.[0] || "",
+          email: err.errors?.email?.[0] || "",
+          password: err.errors?.password?.[0] || "",
+        };
+        setForm((prev) => ({ ...prev, errors: apiErrors }));
+      } else {
+        console.error("Register error:", error);
+        f7.dialog.alert(error.message || "Registration failed.");
+      }
     }
   };
 
@@ -155,7 +110,9 @@ const Register = ({ f7router }) => {
             className="login-input"
           />
           {form.errors.first_name && (
-            <div className="error-message text-sm mb-2">{form.errors.first_name}</div>
+            <div className="error-message text-sm mb-2">
+              {form.errors.first_name}
+            </div>
           )}
 
           <input
@@ -167,7 +124,9 @@ const Register = ({ f7router }) => {
             className="login-input"
           />
           {form.errors.last_name && (
-            <div className="error-message text-sm mb-2">{form.errors.last_name}</div>
+            <div className="error-message text-sm mb-2">
+              {form.errors.last_name}
+            </div>
           )}
 
           <input
@@ -179,7 +138,9 @@ const Register = ({ f7router }) => {
             className="login-input"
           />
           {form.errors.email && (
-            <div className="error-message text-sm mb-2">{form.errors.email}</div>
+            <div className="error-message text-sm mb-2">
+              {form.errors.email}
+            </div>
           )}
 
           <input
@@ -195,7 +156,13 @@ const Register = ({ f7router }) => {
               {form.errors.password}
             </div>
           )}
-          <Button fill large className="login-button" type="button" onClick={handleRegister}>
+          <Button
+            fill
+            large
+            className="login-button"
+            type="button"
+            onClick={handleRegister}
+          >
             Register
           </Button>
 

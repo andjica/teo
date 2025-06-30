@@ -339,10 +339,6 @@ i.icon.f7-icons {
   margin-left: 0px !important;
 }
 
-.page-content{
-  background:white;
-}
-
 .card {
   background: var(--f7-card-bg-color);
   position: relative;
@@ -559,15 +555,12 @@ a.button.button-fill.button-small {
 }
 
 .item-input .item-inner {
-  display: flex
-;
+  display: flex;
   flex-direction: row;
   align-items: baseline;
   justify-content: center;
   gap: 10px;
 }
-
-
 
 b {
   position: absolute;
@@ -874,8 +867,7 @@ a.justify-start.button.button-large.button-outline {
   text-transform: capitalize;
 }
 .scroll-brand-row {
-  display: flex
-;
+  display: flex;
   gap: 10px;
   overflow-x: auto;
   padding: 8px 12px;
@@ -884,8 +876,6 @@ a.justify-start.button.button-large.button-outline {
   padding-left: 0px !important;
 }
 
-
-
 .page-content {
   background: white;
   overflow-x: hidden;
@@ -893,6 +883,10 @@ a.justify-start.button.button-large.button-outline {
 // errro message
 .error-message {
   color: #e24e4e;
+}
+
+.validation-error-alert .dialog-text {
+  white-space: normal !important;
 }
 
 // verify email
@@ -924,4 +918,121 @@ a.justify-start.button.button-large.button-outline {
 .verify-email-container p {
   font-size: 16px;
   color: #555;
+}
+
+// Settings Page
+/* Styling za Settings formu */
+
+.page-settings {
+  max-width: 600px;
+  margin: 0 auto;  
+  padding: 25px 30px;      
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.page-settings .block-title {
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #222;
+  border-bottom: 2px solid #007aff;
+  padding-bottom: 8px;
+}
+
+.page-settings .list {
+  margin-bottom: 35px;
+}
+
+.page-settings .list input {
+  padding: 12px 12px;
+  border-radius: 10px;
+  border: 1.8px solid #ccc;
+  font-size: 15px;
+  transition: border-color 0.25s ease;
+  background-color: #fafafa;
+}
+
+.page-settings .list select{
+  border-radius: 10px;
+  border: 1.8px solid #ccc;
+  background-color: #fafafa!important;
+  height: 30px;
+  font-size: 15px;
+}
+
+.page-settings .list ul li .item-input {
+  margin-bottom: 0;
+}
+
+.page-settings .list input:focus,
+.page-settings .list select:focus {
+  border-color: #007aff;
+  background-color: #fff;
+  outline: none;
+  box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
+}
+
+.page-settings .error-text {
+  color: #d93025;
+  font-size: 13px;
+  margin-top: 5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-family: monospace;
+}
+
+.page-settings .block strong.inset-md {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.page-settings .login-button {
+  background-color: #007aff;
+  color: white;
+  font-weight: 700;
+  font-size: 17px;
+  border-radius: 12px;
+  padding: 14px 0;
+  box-shadow: 0 5px 14px rgba(0, 122, 255, 0.45);
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.page-settings .login-button:hover {
+  background-color: #005bb5;
+}
+
+.page-settings .button.color-red {
+  background-color: #ff3b30;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 14px 0;
+  box-shadow: 0 5px 14px rgba(255, 59, 48, 0.45);
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.page-settings .button.color-red:hover {
+  background-color: #b22a23;
+}
+
+.page-settings .loading-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #555;
+  padding: 50px 0;
+  text-align: center;
+}
+//
+//Footer
+
+.toolbar {
+  position: sticky;
+  bottom: 0;
 }

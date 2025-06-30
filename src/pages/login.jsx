@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Page, Button, f7 } from "framework7-react";
-
-import logo from "../assets/images/logo.png";
+import logo from "@/assets/images/logo.png";
+import { get, post } from "@/js/helper/api";
 
 const Login = ({ f7router }) => {
   const [email, setEmail] = useState("");
@@ -15,12 +15,9 @@ const Login = ({ f7router }) => {
     if (!email) {
       newErrors.email = "Email is required.";
       valid = false;
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        newErrors.email = "Invalid email format.";
-        valid = false;
-      }
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Invalid email format.";
+      valid = false;
     }
 
     if (!password) {
@@ -32,61 +29,63 @@ const Login = ({ f7router }) => {
     return valid;
   };
 
-  const handleLogin = async () => {
-    if (!validate()) return;
-
+  const fetchIsFinishedProfile = async (token) => {
     try {
-      f7.dialog.preloader("Logging in...");
-
-      const response = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      console.log("User data: ", data);
-      f7.dialog.close();
-
-      if (!response.ok) {
-        f7.dialog.alert(data.message || "Login failed.");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      const user = localStorage.getItem("user");
-      localStorage.setItem("is_finished_profile", JSON.stringify(user.isVerify ? 1 : 0));
-
-      const token = localStorage.getItem("token");
-      if (data.user?.email_verified_at) {
-        f7router.navigate("/home/");
-      } else {
-        const id = data.user.id;
-        const hash = data.verification_hash;
-        f7router.navigate(`/verify-email/${id}/${hash}`);
-
-        fetch("http://localhost:8000/api/email/verification-notification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ user_id: id }),
-        }).catch((error) => {
-          console.error("Verification email resend failed:", error.message);
-        });
-      }
+      const response = await get("user-info", token);
+      return response.data?.is_finished_profile ?? 0;
     } catch (error) {
-      f7.dialog.close();
-      f7.dialog.alert("Server error. Please try again later.");
-      console.error("Login error:", error);
+      console.error("Error fetching profile status:", error);
+      return 0;
     }
   };
+
+  const handleLogin = async () => {
+  if (!validate()) return;
+
+  try {
+    f7.dialog.preloader("Logging in...");
+
+    // Login request
+    const data = await post("login", {
+      email,
+      password,
+    });
+
+    f7.dialog.close();
+
+    // Store token and user
+    const token = data.token;
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    // Check if email is verified
+    if (data.user?.email_verified_at) {
+      // Fetch is_finished_profile from backend
+      const isFinished = await get("user-info")
+        .then((res) => res.data?.is_finished_profile ?? 0)
+        .catch(() => 0);
+
+      localStorage.setItem("is_finished_profile", isFinished.toString());
+
+      if (isFinished.toString() === "1") {
+        f7router.navigate("/home/");
+      } else {
+        f7router.navigate("/settings/");
+      }
+    } else {
+      const { id } = data.user;
+      const hash = data.verification_hash;
+      f7router.navigate(`/verify-email/${id}/${hash}`);
+
+      // Send verification email
+      await post("email/verification-notification", { user_id: id });
+    }
+  } catch (error) {
+    f7.dialog.close();
+    console.error("Login error:", error);
+    f7.dialog.alert(error.message || "Server error. Please try again later.");
+  }
+};
 
   return (
     <Page name="login" className="login-custom-page no-navbar no-toolbar">
@@ -98,13 +97,11 @@ const Login = ({ f7router }) => {
         <div className="login-container">
           <h2>Login</h2>
 
-          {/* Wrap inputs in a form */}
           <form
             onSubmit={(e) => {
-              e.preventDefault(); // prevent default form submission
+              e.preventDefault();
               handleLogin();
             }}
-            autoComplete="on" // Enable autocomplete for form
           >
             <input
               type="email"
@@ -140,7 +137,7 @@ const Login = ({ f7router }) => {
           <div className="login-footer">
             <span>Create an account?</span>
             <a href="/register/" className="signup-link">
-              SignUp
+              Sign Up
             </a>
           </div>
         </div>
