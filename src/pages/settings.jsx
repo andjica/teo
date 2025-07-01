@@ -207,6 +207,7 @@ const Settings = ({ f7router }) => {
               type="text"
               placeholder="Your first name"
               value={user.first_name}
+              input={{ disabled: true }}
               onInput={(e) => setUser({ ...user, first_name: e.target.value })}
             />
             <ListInput
@@ -215,6 +216,7 @@ const Settings = ({ f7router }) => {
               type="text"
               placeholder="Your last name"
               value={user.last_name}
+              input={{ disabled: true }}
               onInput={(e) => setUser({ ...user, last_name: e.target.value })}
             />
             <ListInput
@@ -223,6 +225,7 @@ const Settings = ({ f7router }) => {
               type="email"
               placeholder="you@mail.com"
               value={user.email}
+              input={{ disabled: true }}
               onInput={(e) => setUser({ ...user, email: e.target.value })}
             />
             <ListInput
@@ -306,3 +309,4 @@ const Settings = ({ f7router }) => {
 };
 
 export default Settings;
+

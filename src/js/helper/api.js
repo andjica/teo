@@ -1,3 +1,5 @@
+import { f7 } from "framework7-react";
+
 const API = (url, method = "GET", body = null) => {
   const token = localStorage.getItem("token");
 
@@ -14,12 +16,22 @@ const API = (url, method = "GET", body = null) => {
     options.body = JSON.stringify(body);
   }
 
-  return fetch(`http://localhost:8000/api/${url}`, options).then((res) => {
-    if (!res.ok) {
-      return res.json().then((err) => {
-        const message = err.message || `Failed to fetch ${url}`;
-        throw new Error(message);
+  return fetch(`http://localhost:8000/api/${url}`, options).then(async (res) => {
+    
+    if(res.status === 401) {
+      localStorage.clear();
+
+      f7.dialog.alert("Session expired. PLease Login again.","Session Expired", () => {
+        window.location.href = "/login/";
       });
+
+      throw new Error("Unauthorized");
+    }
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const message = err.message || `Failed to fetch ${url}`;
+      throw new Error(message);
     }
     return res.json();
   });

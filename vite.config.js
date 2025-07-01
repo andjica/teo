@@ -44,6 +44,7 @@ export default async () => {
     },
     server: {
       host: true,
+      historyApiFallback: true,
     },
 
   };
