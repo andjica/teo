@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Page,
   Icon,
@@ -20,6 +20,10 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import ProductView from "./product/ProductView";
+import { isTokenExpired } from "@/js/helper/tokenExpired";
+import { get } from "@/js/helper/api";
+import CartSheet from "@/components/CartSheet";
 /* ----------------------------------------------------------------- */
 
 const categories = [
@@ -34,58 +38,43 @@ const categories = [
   "Posts",
 ];
 
-const products = [
-  {
-    id: 1,
-    name: "Endo Motor X300",
-    brand: "TeoDental",
-    images: [
-      "https://focusdental.hr/wp-content/uploads/2023/12/Presigum-A-silikon2-1-1-2048x1357.jpg",
-      "https://picsum.photos/seed/endo-x300/600/400",
-    ],
-    price: 119.99,
-    taxRate: 0.2,
-    description:
-      "Brzi i pouzdan endo motor s tri brzinska moda i moment kontrolom.",
-    variants: { size: ["Small", "Medium", "Large"], color: ["White", "Black"] },
-  },
-  {
-    id: 2,
-    name: "LED Curing Light",
-    brand: "DentLux",
-    images: [
-      "https://focusdental.hr/wp-content/uploads/2023/12/AR-Kofferdam-110-025-1-17-pcs-2-scaled.jpg",
-      "https://picsum.photos/seed/led-curing/600/400",
-    ],
-    price: 89.5,
-    taxRate: 0.2,
-    description:
-      "Snažna LED lampa za polimerizaciju kompozita, autonomija 120 min.",
-    variants: { size: ["Standard"], color: ["Blue", "Silver"] },
-  },
-  {
-    id: 3,
-    name: "Glass Ionomer Cement",
-    brand: "GC Europe",
-    images: [
-      "https://focusdental.hr/wp-content/uploads/2023/12/AR-Kofferdam-110-025-1-17-pcs-2-scaled.jpg",
-      "https://picsum.photos/seed/gic/600/400",
-    ],
-    price: 42,
-    taxRate: 0.2,
-    description:
-      "Visokokvalitetni GIC sa superiornom adhezijom i fluorid-release-om.",
-    variants: { size: ["10g"], color: ["Natural"] },
-  },
-];
-
-const HomePage = () => {
+const HomePage = ({f7router}) => {
+  const [products, setProducts] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [selectedVariants, setSelectedVariants] = useState({});
+
+  useEffect(() => {
+    if (isTokenExpired()) {
+      // Token je istekao ili ne postoji
+      localStorage.clear(); // ili removeItem za selektivno brisanje
+      f7router.navigate('/login/');
+    } else {
+      // Token je validan, možeš fetchovati proizvode i ostalo
+      fetchProducts();
+    }
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await get("products"); // 👈 koristi get iz api.js
+      setProducts(response.data);
+    } catch (err) {
+      console.error("Error fetching products:", err.message);
+    }
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    if (path.startsWith("storage")) {
+      return `http://localhost:8000/${path}`;
+    }
+    return `http://localhost:8000/storage/${path}`;
+  };
 
   const handleVariantChange = (pid, type, value) => {
     setSelectedVariants((prev) => ({
@@ -106,13 +95,12 @@ const HomePage = () => {
     });
   };
 
-
   const addToCart = (product) => {
     const sel = selectedVariants[product.id] || {};
     const newItem = {
       ...product,
-      selectedSize: sel.size || product.variants.size[0],
-      selectedColor: sel.color || product.variants.color[0],
+      selectedSize: sel.size || product?.variants.size[0],
+      selectedColor: sel.color || product?.variants.color[0],
     };
     setCartItems((prev) => [...prev, newItem]);
 
@@ -159,7 +147,7 @@ const HomePage = () => {
       <Header cartItems={cartItems} setCartOpen={setCartOpen} />
 
       {/* ---------- KATEGORIJE ---------- */}
-      <Block className="category-scroll hide-scrollbar">
+      {/* <Block className="category-scroll hide-scrollbar">
         <div
           className="scroll-cat-row hide-scrollbar"
           style={{
@@ -175,10 +163,10 @@ const HomePage = () => {
             </Button>
           ))}
         </div>
-      </Block>
+      </Block> */}
 
       {/* ---------- POPULAR SLIDER ---------- */}
-      <BlockTitle>Popular Products</BlockTitle>
+      {/* <BlockTitle>Popular Products</BlockTitle>
       <Block className="horizontal-scroll hide-scrollbar">
         <div style={{ display: "flex", gap: "10px" }}>
           {products.map((p) => (
@@ -211,36 +199,34 @@ const HomePage = () => {
             </Card>
           ))}
         </div>
-      </Block>
+      </Block> */}
 
       {/* ---------- GRID ---------- */}
       <BlockTitle>Product Grid</BlockTitle>
       <Block className="grid grid-cols-2 grid-gap">
         {products.map((p) => (
-          <Card key={p.id}>
+          <Card key={p.id} className="product-card">
             <img
-              src={p.images[0]}
+              src={getImageUrl(p.primary_image.image_url)}
               data-pid={p.id}
               alt={p.name}
-              style={{ width: "100%", borderRadius: 10 }}
+              style={{ width: "100%", height:"50%" ,borderRadius: 10 }}
             />
-            <div className="price-badge">€{p.price.toFixed(2)}</div>
+            <div className="price-badge">€{p.base_price}</div>
             <CardContent>
-              <div className="font-bold">{p.name}</div>
-              <div className="text-color-gray">{p.brand}</div>
-
-              <div className="flex justify-between mt-2">
-                <Button fill small onClick={() => addToCart(p)}>
-                  <Icon f7="cart_fill_badge_plus" className="text-white" />
-                </Button>
-                <Button
-                  outline
-                  small
-                  custom
-                  onClick={() => setProductDetailOpen(p)}
-                >
-                  See more
-                </Button>
+              <div className="product-content">
+                <div className="product-name">
+                  <div className="font-bold">{p.name}</div>
+                  <div className="text-color-gray">{p.category.name}</div>
+                </div>
+                <div className="flex justify-between mt-2">
+                  <Button fill small onClick={() => addToCart(p)}>
+                    <Icon f7="cart_fill_badge_plus" className="text-white" />
+                  </Button>
+                  <Button outline small onClick={() => setProductDetailOpen(p)}>
+                    See more
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -249,71 +235,7 @@ const HomePage = () => {
 
       {/* ---------- SHEET (KORPA) ---------- */}
       {/* ---------- CART SHEET (card-style) ---------- */}
-      <Sheet
-        opened={cartOpen}
-        onSheetClosed={() => setCartOpen(false)}
-        style={{ height: "94vh" }}
-        backdrop
-      >
-        <Block strong>
-          <h2 style={{ margin: 0 }}>My Cart</h2>
-        </Block>
-
-        <Block noHairlines>
-          {cartItems.length === 0 && (
-            <p className="text-align-center">Cart is empty</p>
-          )}
-
-          {cartItems.map((it, idx) => (
-            <div key={idx} className="cart-card">
-              <img src={it.images[0]} alt={it.name} />
-
-              <div>
-                <h4>{it.name}</h4>
-                <p>{it.subtitle || it.brand}</p>
-                <div className="price">
-                  {it.cur || "€"}
-                  {(it.price * (it.quantity || 1)).toFixed(2)}
-                </div>
-              </div>
-
-              {/* qty pill */}
-              <div className="stepper-pill">
-                <Button small clear onClick={() => updateQty(idx, -1)}>
-                  <Icon f7="minus" />
-                </Button>
-                {it.quantity || 1}
-                <Button small clear onClick={() => updateQty(idx, +1)}>
-                  <Icon f7="plus" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </Block>
-
-        <div className="cart-footer">
-          <div className="summary-total">
-            <h4>Total&nbsp;({cartItems.length} item)</h4>
-            <h4>€{total.toFixed(2)}</h4>
-          </div>
-
-          <Button
-            large
-            fill
-            className="checkout-wide"
-            onClick={() => {
-              setCartOpen(false); // 1. zatvori cart
-              setTimeout(() => {
-                f7.views.current.router.navigate("/checkout/");
-                // 2. sačekaj animaciju, pa idi dalje
-              }, 300); // dovoljno da se Sheet zatvori lepo
-            }}
-          >
-            Proceed to Checkout
-            <Icon f7="arrow_right_circle_fill" />
-          </Button>
-        </div>
-      </Sheet>
+      <CartSheet cartOpen={cartOpen} setCartOpen={setCartOpen} />
 
       {/* ---------- CHECKOUT POPUP ---------- */}
       <Popup opened={checkoutOpen} onPopupClosed={() => setCheckoutOpen(false)}>
@@ -330,148 +252,12 @@ const HomePage = () => {
       </Popup>
 
       {/* ---------- PRODUCT DETAIL POPUP ---------- */}
-      <Popup
+      <ProductView
+        product={productDetailOpen}
         opened={!!productDetailOpen}
-        onPopupClosed={() => setProductDetailOpen(false)}
-        className="safe-areas"
-      >
-        {productDetailOpen && (
-          <Page>
-            {/* ► gornji back & bag dugmad */}
-            <Button
-              small
-              round
-              style={{
-                position: "absolute",
-                left: 24,
-                top: 24,
-                width: 48,
-                height: 48,
-                background: "#000",
-                color: "#fff",
-                zIndex: 5,
-              }}
-              onClick={() => setProductDetailOpen(false)}
-            >
-              <Icon f7="arrowshape_turn_up_left_fill" />
-            </Button>
-            <Button
-              small
-              round
-              style={{
-                position: "absolute",
-                right: 24,
-                top: 24,
-                width: 48,
-                height: 48,
-                background: "#fff",
-                zIndex: 5,
-              }}
-              onClick={() => addToCart(productDetailOpen)}
-            >
-              <Icon f7="bag" color="#000" />
-            </Button>
-
-            <Block strong className="mt-6">
-              {/* ► Slika + rating badge */}
-              <div className="detail-img-box">
-                <img
-                  src={productDetailOpen.images[0]}
-                  alt=""
-                  style={{ width: "100%", height: 260, objectFit: "contain" }}
-                />
-                <div className="detail-rating">
-                  <div>
-                    <Icon f7="star_fill" size="16" className="star" /> 4.9
-                  </div>
-                  <small style={{ opacity: 0.8 }}>170 Review</small>
-                </div>
-              </div>
-
-              {/* ► Naslov + subtitle */}
-              <h2 style={{ marginTop: 24, marginBottom: 4 }}>
-                {productDetailOpen.name}
-              </h2>
-              <p className="color-gray text-small">{productDetailOpen.brand}</p>
-
-              {/* ► Qty stepper */}
-              <div className="flex justify-between items-center mt-2">
-                <b>Description</b>
-                <div className="qty-pill">
-                  <Button
-                    small
-                    clear
-                    onClick={() =>
-                      f7.toast.create({ text: "-", closeTimeout: 600 }).open()
-                    }
-                  >
-                    <Icon f7="minus" />
-                  </Button>
-                  1
-                  <Button
-                    small
-                    clear
-                    onClick={() =>
-                      f7.toast.create({ text: "+", closeTimeout: 600 }).open()
-                    }
-                  >
-                    <Icon f7="plus" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* ► Opis */}
-              <p style={{ lineHeight: "22px" }}>
-                {productDetailOpen.description}
-              </p>
-
-              {/* ► SIZE selector */}
-              <b>Size</b>
-              <div className="flex gap-3 mt-2">
-                {productDetailOpen.variants.size.map((s) => (
-                  <div
-                    key={s}
-                    className={`pill-size ${s === "Medium" ? "active" : ""}`}
-                  >
-                    {s}
-                  </div>
-                ))}
-              </div>
-
-              {/* ► COLOR selector
-              {productDetailOpen.variants.color.length>0 && (
-                <>
-                  <div className="flex gap-2 mt-4">
-                    {productDetailOpen.variants.color.map((c,i)=>(
-                      <div
-                        key={c}
-                        className={`color-dot ${i===0?'active':''}`}
-                        style={{background:c}}
-                      />
-                    ))}
-                  </div>
-                </>
-              )} */}
-
-              {/* ► Bottom bar */}
-              <div className="bottom-bar">
-                <Button className="heart">
-                  <Icon f7="heart" size="24" color="#000" />
-                </Button>
-                <Button
-                  large
-                  fill
-                  className="cart-btn"
-                  onClick={() => addToCart(productDetailOpen)}
-                >
-                  <Icon f7="bag" />
-                  &nbsp;Add to cart
-                </Button>
-              </div>
-            </Block>
-          </Page>
-        )}
-      </Popup>
+        onClose={() => setProductDetailOpen(false)}
+        onAddToCart={addToCart}
+      />
       <Footer />
     </Page>
   );

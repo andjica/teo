@@ -3,7 +3,7 @@ import HomePage from '../pages/Home.jsx';
 import AboutPage from '../pages/about.jsx';
 import FormPage from '../pages/form.jsx';
 import CatalogPage from '../pages/catalog.jsx';
-import ProductPage from '../pages/product.jsx';
+import ProductPage from '../pages/product/ProductView.jsx';
 import SettingsPage from '../pages/Settings.jsx';
 import LoginPage from '../pages/Login.jsx';
 import RegisterPage from '../pages/Register.jsx';
@@ -58,7 +58,7 @@ var routes = [
     component: CatalogPage,
   },
   {
-    path: '/product/:id/',
+    path: '/product/:id',
     component: ProductPage,
   },
   {

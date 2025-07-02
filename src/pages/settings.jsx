@@ -107,6 +107,7 @@ const Settings = ({ f7router }) => {
       .catch((err) => {
         console.error("Error fetching user:", err);
         f7.dialog.alert("Failed to fetch user");
+        f7router.navigate('/home/');
       })
       .finally(() => {
         setIsLoading(false);

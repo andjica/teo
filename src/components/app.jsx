@@ -27,6 +27,7 @@ import cordovaApp from '../js/cordova-app';
 
 import routes from '../js/routes';
 import store from '../js/store';
+import { isTokenExpired } from '../js/helper/tokenExpired';
 
 const MyApp = () => {
   // Login screen demo data
@@ -53,6 +54,13 @@ const MyApp = () => {
         androidOverlaysWebView: false,
       },
   };
+
+  useEffect(() => {
+    if (isTokenExpired()) {
+      f7.views.main.router.navigate('/login/');
+    }
+  }, []);
+
   const alertLoginData = () => {
     f7.dialog.alert('Username: ' + username + '<br>Password: ' + password, () => {
       f7.loginScreen.close();
@@ -71,46 +79,41 @@ const MyApp = () => {
     <App { ...f7params }>
 
         {/* Left panel with cover effect*/}
-        <Panel left cover dark>
+        {/* <Panel left cover dark>
           <View>
             <Page>
               <Navbar title="Left Panel"/>
               <Block>Left panel content goes here</Block>
             </Page>
           </View>
-        </Panel>
+        </Panel> */}
 
 
         {/* Right panel with reveal effect*/}
-        <Panel right reveal dark>
+        {/* <Panel right reveal dark>
           <View>
             <Page>
               <Navbar title="Right Panel"/>
               <Block>Right panel content goes here</Block>
             </Page>
           </View>
-        </Panel>
+        </Panel> */}
 
 
         {/* Views/Tabs container */}
         <Views tabs className="safe-areas">
-          {/* Tabbar for switching views-tabs */}
+          {/* <View id="view-login" main tab tabActive url="/login/" />
 
-          {/* Your main view/tab, should have "view-main" className. It also has "tabActive" prop */}
-          <View id="view-login" main tab tabActive url="/login/" />
-
-          {/* Catalog View */}
           <View id="view-catalog" name="catalog" tab url="/catalog/" />
           <View id="view-home" name="home" tab url="/home/" />
           <View id="view-auctions" name="auctions" tab url="/auctions/" />
 
-          {/* Settings View */}
-          <View id="view-settings" name="settings" tab url="/settings/" />
-
+          <View id="view-settings" name="settings" tab url="/settings/" /> */}
+          <View main url="/login/" />
         </Views>
 
       {/* Popup */}
-      <Popup id="my-popup">
+      {/* <Popup id="my-popup">
         <View>
           <Page>
             <Navbar title="Popup">
@@ -123,9 +126,9 @@ const MyApp = () => {
             </Block>
           </Page>
         </View>
-      </Popup>
+      </Popup> */}
 
-      <LoginScreen id="my-login-screen">
+      {/* <LoginScreen id="my-login-screen">
         <View>
           <Page loginScreen>
             <LoginScreenTitle>Login</LoginScreenTitle>
@@ -153,7 +156,8 @@ const MyApp = () => {
             </List>
           </Page>
         </View>
-      </LoginScreen>
+      </LoginScreen> */}
+
     </App>
   )
 }

@@ -1,12 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Page, Button, f7 } from "framework7-react";
 import logo from "@/assets/images/logo.png";
 import { get, post } from "@/js/helper/api";
+import { isTokenExpired } from "@/js/helper/tokenExpired";
 
 const Login = ({ f7router }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
+
+useEffect(() => {
+  if (!isTokenExpired()) {
+    // Token važi — preusmeri posle 3 sekunde
+    const timer = setTimeout(() => {
+      f7router.navigate('/home/');
+    }, 3000);
+    return () => clearTimeout(timer);
+  } else {
+    // Token je istekao ili ga nema — briši localStorage
+    localStorage.clear();
+  }
+}, [f7router]);
+
 
   const validate = () => {
     let valid = true;
@@ -27,16 +42,6 @@ const Login = ({ f7router }) => {
 
     setErrors(newErrors);
     return valid;
-  };
-
-  const fetchIsFinishedProfile = async (token) => {
-    try {
-      const response = await get("user-info", token);
-      return response.data?.is_finished_profile ?? 0;
-    } catch (error) {
-      console.error("Error fetching profile status:", error);
-      return 0;
-    }
   };
 
   const handleLogin = async () => {
