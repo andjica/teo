@@ -131,7 +131,7 @@ input.login-input {
   margin-bottom: 20px;
   border-radius: 14px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-  overflow: hidden;
+  // overflow: hidden;
 }
 
 .product-title {
@@ -223,7 +223,7 @@ a.button.button-fill.button-small {
 .showcase-card {
   min-width: 200px;
   border-radius: 12px;
-  overflow: hidden;
+  // overflow: hidden;
   flex-shrink: 0;
   margin-right: 9px;
   margin-left: 0px;
@@ -233,7 +233,7 @@ a.button.button-fill.button-small {
 .product-card {
   position: relative;
   border-radius: 12px;
-  overflow: hidden;
+  // overflow: hidden;
   margin-bottom: 16px;
 }
 
@@ -291,9 +291,7 @@ a.button.button-small {
     background-size: auto;
     border-radius: 10px;
 }
-.navbar{
-  height: 43px;
-}
+
 .grid.grid-gap {
   gap: 15px !important;
 }
@@ -333,7 +331,7 @@ i.icon.f7-icons {
 .product-card {
   position: relative;
   border-radius: 12px;
-  overflow: hidden;
+  // overflow: hidden;
   margin-bottom: 16px;
   margin-right: 10px !important;
   margin-left: 0px !important;
@@ -429,9 +427,9 @@ a.button.button-fill.button-large {
 
 
 .navbar.navbar-current {
-  width: 95%;
-  margin-left: 2.5%;
-  top: 5px;
+  // width: 95%;
+  // margin-left: 2.5%;
+  top: 0;
   border-radius: 10px !important;
 }
 
@@ -761,10 +759,9 @@ a.button.button-small.button-outline {
 }
 
 .navbar {
-  height: 43px;
-  margin-left: 2.5%;
-  width: 95% !important;
-  margin-top: 7px;
+  position: sticky;
+  width: 100% !important;
+  top: 0;
 }
 
 .custom-filter-dropdowns {
@@ -857,7 +854,8 @@ span.cart-badge {
   color: black;
   line-height: 1.5;
   position: absolute;
-  right: 28px;
+  right: -5px;
+  top: 2px;
 }
 a.justify-start.button.button-large.button-outline {
   background-image: url(/assets/images/bgpapir.jpg);
@@ -879,7 +877,7 @@ a.justify-start.button.button-large.button-outline {
 .page-content {
   padding-top: 0;
   background: white;
-  overflow-x: hidden;
+  // overflow-x: hidden;
 }
 // errro message
 .error-message {
@@ -1066,4 +1064,15 @@ a.justify-start.button.button-large.button-outline {
 
 .flex.justify-between {
   gap: 10px;
+}
+
+//navigation css
+
+.right {
+  position: relative;
+}
+
+.block-strong {
+  padding-top: 0;
+  padding-bottom: 0;
 }

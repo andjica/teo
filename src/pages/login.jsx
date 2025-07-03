@@ -11,10 +11,10 @@ const Login = ({ f7router }) => {
 
 useEffect(() => {
   if (!isTokenExpired()) {
-    // Token važi — preusmeri posle 3 sekunde
+    // Token važi — preusmeri posle 2 sekunde
     const timer = setTimeout(() => {
       f7router.navigate('/home/');
-    }, 3000);
+    }, 2000);
     return () => clearTimeout(timer);
   } else {
     // Token je istekao ili ga nema — briši localStorage

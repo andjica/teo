@@ -8,8 +8,18 @@ const ProductView = ({ product, opened, onClose, onAddToCart }) => {
   const [showProduct, setShowProduct] = useState(null);
   const [mainImage, setMainImage] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [cartCount, setCartCount] = useState(0);
 
-const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    setCartCount(cart.length);
+  };
+
+  useEffect(() => {
+    if (opened) {
+      updateCartCount();
+    }
+  }, [opened]);
 
   useEffect(() => {
     if (!opened || !productId) {
@@ -29,6 +39,11 @@ const cart = JSON.parse(localStorage.getItem("cart") || "[]");
           response.data.images.find((img) => img.is_primary) ||
           response.data.images[0];
         setMainImage(primary?.image_url || null);
+        setTimeout(() => {
+          const popupEl = document.querySelector(".product-view-page");
+          const firstButton = popupEl?.querySelector("button");
+          firstButton?.focus();
+        }, 300);
       } catch (error) {
         console.error("Failed to load product:", error);
       }
@@ -46,14 +61,6 @@ const cart = JSON.parse(localStorage.getItem("cart") || "[]");
   const increaseQty = () => {
     if (showProduct && quantity < showProduct.quantity) {
       setQuantity((q) => q + 1);
-    } else {
-      f7.dialog
-        .alert({
-          text: "You cannot take more products than are in stock.",
-          closeTimeout: 2000,
-          position: "bottom",
-        })
-        .open();
     }
   };
 
@@ -96,6 +103,7 @@ const cart = JSON.parse(localStorage.getItem("cart") || "[]");
         totalPrice: +(
           Math.min(quantity, product.quantity) * product.base_price
         ),
+        originQuantuty: product.quantity,
       });
     }
 
@@ -167,6 +175,24 @@ const cart = JSON.parse(localStorage.getItem("cart") || "[]");
               aria-label="Add to cart"
             >
               <Icon f7="bag" size={20} />
+              {cartCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    backgroundColor: "#ff3b30",
+                    color: "#fff",
+                    borderRadius: "20px",
+                    height: "25px",
+                    width: "25px",
+
+                    fontWeight: "bold",
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
             </Button>
           </div>
 
@@ -308,7 +334,11 @@ const cart = JSON.parse(localStorage.getItem("cart") || "[]");
                 marginBottom: 40,
               }}
             >
-              <b style={{ fontSize: "1rem" }}>Quantity</b>
+              {showProduct.quantity > 0 && (
+                <b style={{ fontSize: "1rem" }}>
+                  Quantity: {showProduct.quantity}
+                </b>
+              )}
               <div
                 className="qty-stepper"
                 style={{

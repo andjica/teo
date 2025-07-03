@@ -1,4 +1,4 @@
-import { Block, Button, Icon, Sheet } from "framework7-react";
+import { Block, Button, Icon, Sheet, f7 } from "framework7-react";
 import React, { useEffect, useState } from "react";
 import { getImageUrl } from "@/js/helper/displayImage";
 
@@ -53,9 +53,28 @@ const CartSheet = ({ cartOpen, setCartOpen }) => {
         <h2 style={{ margin: 0 }}>My Cart</h2>
       </Block>
 
-      <Block noHairlines style={{ position: "relative" }}>
+      <Block
+        noHairlines
+        style={{
+          position: "relative",
+          height: "100%",
+          maxHeight: "510px",
+          overflowY: "auto",
+          borderTop: "1px solid grey",
+        }}
+      >
         {productCart.length === 0 ? (
-          <p className="text-align-center">Cart is empty</p>
+          <p
+            className="text-align-center"
+            style={{
+              fontSize: "1.2rem", // veći tekst
+              marginTop: "2rem", // razmak od vrha
+              color: "#666", // malo svetlija nijansa
+              fontWeight: 500, // polu-bold za isticanje
+            }}
+          >
+            Cart is empty
+          </p>
         ) : (
           productCart.map((it, idx) => (
             <div
@@ -84,8 +103,9 @@ const CartSheet = ({ cartOpen, setCartOpen }) => {
                 <p style={{ margin: "4px 0" }}>
                   {it.subtitle || it.brand || ""}
                 </p>
+                <p>€{it.price}</p>
                 <div className="price" style={{ fontWeight: "600" }}>
-                  €{(it.price * (it.quantity || 1)).toFixed(2)}
+                  Total: €{(it.price * (it.quantity || 1)).toFixed(2)}
                 </div>
               </div>
 
@@ -93,11 +113,21 @@ const CartSheet = ({ cartOpen, setCartOpen }) => {
                 className="stepper-pill"
                 style={{ display: "flex", alignItems: "center", gap: 8 }}
               >
-                <Button small clear onClick={() => updateQty(idx, -1)}>
+                <Button
+                  small
+                  clear
+                  onClick={() => updateQty(idx, -1)}
+                  disabled={it.quantity <= 1 || it.originQuantuty === 0}
+                >
                   <Icon f7="minus" />
                 </Button>
                 <span>{it.quantity || 1}</span>
-                <Button small clear onClick={() => updateQty(idx, +1)}>
+                <Button
+                  small
+                  clear
+                  onClick={() => updateQty(idx, +1)}
+                  disabled={it.quantity >= it.originQuantuty}
+                >
                   <Icon f7="plus" />
                 </Button>
               </div>
