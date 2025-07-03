@@ -1,5 +1,4 @@
 
-import HomePage from '../pages/Home.jsx';
 import AboutPage from '../pages/about.jsx';
 import FormPage from '../pages/form.jsx';
 import CatalogPage from '../pages/catalog.jsx';
@@ -15,6 +14,7 @@ import RequestAndLoad from '../pages/request-and-load.jsx';
 import NotFoundPage from '../pages/404.jsx';
 import VerifyEmail from '../pages/VerifyEmail.jsx';
 import VerifySuccess from '../pages/VerifySuccess.jsx';
+import HomePage from '../pages/home.jsx';
 
 var routes = [
   {
