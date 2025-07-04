@@ -24,23 +24,14 @@ import ProductView from "./product/ProductView";
 import { isTokenExpired } from "@/js/helper/tokenExpired";
 import { get } from "@/js/helper/api";
 import CartSheet from "@/components/CartSheet";
+import Category from "@/components/Category";
+import { getImageUrl } from "@/js/helper/displayImage";
 /* ----------------------------------------------------------------- */
-
-const categories = [
-  "All",
-  "Conservative",
-  "Endodontics",
-  "Impressions",
-  "Machines",
-  "Disinfection",
-  "Used",
-  "Instruments",
-  "Posts",
-];
 
 const HomePage = ({f7router}) => {
   const [products, setProducts] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -55,6 +46,7 @@ const HomePage = ({f7router}) => {
     } else {
       // Token je validan, možeš fetchovati proizvode i ostalo
       fetchProducts();
+      fetchCategory();
     }
   }, []);
 
@@ -67,14 +59,14 @@ const HomePage = ({f7router}) => {
     }
   };
 
-  const getImageUrl = (path) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    if (path.startsWith("storage")) {
-      return `http://localhost:8000/${path}`;
+  const fetchCategory = async () => {
+    try {
+      const response = await get("categories");
+      setCategories(response.data);
+    } catch(err) {
+      console.error("Error fetching categories:", err.message);
     }
-    return `http://localhost:8000/storage/${path}`;
-  };
+  }
 
   const handleVariantChange = (pid, type, value) => {
     setSelectedVariants((prev) => ({
@@ -168,6 +160,7 @@ const HomePage = ({f7router}) => {
           ))}
         </div>
       </Block> */}
+      <Category categories={categories}/>
 
       {/* ---------- POPULAR SLIDER ---------- */}
       {/* <BlockTitle>Popular Products</BlockTitle>

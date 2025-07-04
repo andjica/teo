@@ -181,9 +181,9 @@ const Settings = ({ f7router }) => {
             style={{ height: 60 }}
           />
         </NavTitle>
-        <NavRight>
+        {/* <NavRight>
           <Icon f7="gear_alt" />
-        </NavRight>
+        </NavRight> */}
       </Navbar>
 
       {/* Form */}
@@ -297,7 +297,7 @@ const Settings = ({ f7router }) => {
           {/* Buttons */}
           <Block strong insetMd>
             <Button fill large className="login-button" type="submit">
-              Upload
+              Save
             </Button>
             <Button onClick={logOut} color="red">
               Log Out

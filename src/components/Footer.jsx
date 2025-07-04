@@ -11,7 +11,7 @@ const Footer = () => {
         <span className="tabbar-label">Brand New</span>
       </Link>
 
-      <Link tabLink="#view-auctions">
+      <Link  href="/auctions/">
         <i className="icon custom-icon">
           <img src="/assets/images/auction.png" alt="Auctions" />
         </i>
