@@ -4,7 +4,7 @@ import React from "react";
 const Footer = () => {
   return (
     <Toolbar tabbar icons bottom>
-      <Link tabLink="#view-catalog">
+      <Link tabLink="#home">
         <i className="icon custom-icon">
           <img src="/assets/images/product.png" alt="brandnew" />
         </i>

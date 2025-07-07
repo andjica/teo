@@ -29,6 +29,7 @@ import { Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { isToday } from "@/js/helper/customeDate";
 import AuctionDetail from "@/components/auction/AuctionDetail";
+import Footer from "@/components/Footer";
 
 /* ---------- demo aukcije ---------- */
 // const initAuctions = [
@@ -105,17 +106,17 @@ export default function Auctions() {
   const placeBid = () => {
     const val = parseFloat(bidVal);
     if (isNaN(val) || val <= currentAuction.currentBid) {
-      f7.dialog.alert("Bid mora biti veći od trenutne cene.");
+      f7.dialog.alert("The bid must be higher than the current price.");
       return;
     }
-    f7.dialog.confirm(`Potvrdi bid od €${val}?`, () => {
+    f7.dialog.confirm(`Confirm bid from €${val}?`, () => {
       setAucs((list) =>
         list.map((a) =>
           a.id === currentAuction.id
             ? {
                 ...a,
                 currentBid: val,
-                bids: [...a.bids, { user: "YOU", amount: val }],
+                bids: [...(a.bids || []), { user: "YOU", amount: val }],
               }
             : a
         )
@@ -123,7 +124,7 @@ export default function Auctions() {
       setCurrentAuction((c) => ({
         ...c,
         currentBid: val,
-        bids: [...c.bids, { user: "YOU", amount: val }],
+        bids: [...(c.bids || []), { user: "YOU", amount: val }],
       }));
       setBidVal("");
       f7.toast.show({ text: "Bid placed", closeTimeout: 1500 });
@@ -225,13 +226,6 @@ export default function Auctions() {
                 className="flex justify-between items-end mt-4"
                 style={{ alignItems: "center" }}
               >
-                <div>
-                  {/* <div style={{ fontSize: 12, color: '#9CA3AF' }}>Current</div> */}
-                  {/* <div style={{ fontWeight: 700, fontSize: 16 }}>
-              {a.currency}
-              {a.currentBid}
-            </div> */}
-                </div>
                 <Button
                   small
                   fill
@@ -261,6 +255,7 @@ export default function Auctions() {
         bidVal={bidVal}
         setBidVal={setBidVal}
       />
+      <Footer />
     </Page>
   );
 }
