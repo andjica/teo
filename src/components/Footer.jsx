@@ -4,25 +4,25 @@ import React from "react";
 const Footer = () => {
   return (
     <Toolbar tabbar icons bottom>
-      <Link tabLink="#home">
+      <Link href="/new-products/">
         <i className="icon custom-icon">
           <img src="/assets/images/product.png" alt="brandnew" />
         </i>
-        <span className="tabbar-label">Brand New</span>
+        <span className="tabbar-label color-black">Brand New</span>
       </Link>
 
       <Link  href="/auctions/">
         <i className="icon custom-icon">
           <img src="/assets/images/auction.png" alt="Auctions" />
         </i>
-        <span className="tabbar-label">Auctions</span>
+        <span className="tabbar-label color-black">Auctions</span>
       </Link>
 
-      <Link tabLink="#view-home">
+      <Link href="/second-hand-products/">
         <i className="icon custom-icon">
           <img src="/assets/images/second-hand.png" alt="2nd Hand" />
         </i>
-        <span className="tabbar-label">2nd Hand</span>
+        <span className="tabbar-label color-black">2nd Hand</span>
       </Link>
     </Toolbar>
   );

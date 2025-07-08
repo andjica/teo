@@ -34,7 +34,6 @@ const HomePage = ({f7router}) => {
   const [categories, setCategories] = useState([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [selectedVariants, setSelectedVariants] = useState({});
 
@@ -143,23 +142,6 @@ const HomePage = ({f7router}) => {
       <Header cartItems={cartItems} setCartOpen={setCartOpen} />
 
       {/* ---------- KATEGORIJE ---------- */}
-      {/* <Block className="category-scroll hide-scrollbar">
-        <div
-          className="scroll-cat-row hide-scrollbar"
-          style={{
-            display: "flex",
-            gap: "10px",
-            overflowX: "auto",
-            padding: "10px",
-          }}
-        >
-          {categories.map((cat) => (
-            <Button key={cat} small outline>
-              {cat}
-            </Button>
-          ))}
-        </div>
-      </Block> */}
       <Category categories={categories}/>
 
       {/* ---------- POPULAR SLIDER ---------- */}

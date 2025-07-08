@@ -15,6 +15,8 @@ import NotFoundPage from '../pages/404.jsx';
 import VerifyEmail from '../pages/VerifyEmail.jsx';
 import VerifySuccess from '../pages/VerifySuccess.jsx';
 import HomePage from '../pages/home.jsx';
+import NewProductsPage from "../pages/NewProducts.jsx";
+import SecondHandProductsPage from "../pages/SecondHandProducts.jsx";
 
 var routes = [
   {
@@ -36,6 +38,14 @@ var routes = [
   {
     path: '/home/',
     component: HomePage,
+  },
+  {
+    path: '/new-products/',
+    component: NewProductsPage,
+  },
+  {
+    path: '/second-hand-products/',
+    component: SecondHandProductsPage,
   },
   {
     path: '/checkout/',
