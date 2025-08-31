@@ -3,7 +3,7 @@ import AboutPage from '../pages/about.jsx';
 import FormPage from '../pages/form.jsx';
 import CatalogPage from '../pages/catalog.jsx';
 import ProductPage from '../pages/product/ProductView.jsx';
-import SettingsPage from '../pages/Settings.jsx';
+import SettingsPage from '../pages/settings.jsx';
 import LoginPage from '../pages/login.jsx';
 import RegisterPage from '../pages/register.jsx';
 import AuctionsPage from '../pages/auctions.jsx';
