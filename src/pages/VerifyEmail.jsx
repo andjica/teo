@@ -1,60 +1,88 @@
+// src/pages/VerifyEmail.jsx
 import { useEffect } from "react";
 import { Button, Page, f7 } from "framework7-react";
-import "../css/app.less";
 import LogoImage from "../assets/images/logo.png";
 
 const VerifyEmail = ({ f7router, f7route }) => {
-  const id = f7route.params?.id;
+  const id = f7route?.params?.id;
   const hash = f7route?.params?.hash;
-    const query = window.location.search;
-  console.log("ID:", id);
-  console.log("Hash:", hash);
-  console.log("f7route:", f7route);
-  // console.log("query:", window.location.search);
+  const query = window.location.search || ""; // npr. ?expires=...&signature=...
 
   const token = localStorage.getItem("token");
-//   const verifyEmail = () => {
-//     f7.dialog.preloader("Verifying...");
 
-//     fetch(`http://localhost:8000/api/email/verify/${id}/${hash}${query}`, {
-//       method: "GET",
-//       headers: {
-//         Accept: "application/json",
-//       },
-//     })
-//       .then((res) => {
-//         f7.dialog.close();
-//         console.log("RESPONSE:",res);
-//         if (res.ok) {
-//           f7.dialog.alert("Email successfully verified ✅", "Success", () => {
-//              f7router.navigate("/verify-success/");
-//           });
-//         } else {
-//           f7.dialog.alert("Invalid verification link ❌", "Error");
-//         }
-//       })
-//       .catch(() => {
-//         f7.dialog.close();
-//         f7.dialog.alert("Something went wrong during verification ❌", "Error");
-//       });
-//   };
+  const verifyEmail = async () => {
+    try {
+      f7.dialog.preloader("Verifying...");
+
+      // Ako koristiš helper za bazni URL, zameni localhost bazom iz helpera
+      const res = await fetch(
+        `http://localhost:8000/api/email/verify/${id}/${hash}${query}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      f7.dialog.close();
+
+      // Laravel može vratiti 200 (ok), 204 (no content), 409 (already verified) itd.
+     if (res.ok || res.status === 204 || res.status === 409) {
+      try {
+        const data = await res.json().catch(() => ({})); // pokupi JSON ako postoji
+        const userRaw = localStorage.getItem("user");
+        console.log(userRaw);
+        if (userRaw) {
+          const user = JSON.parse(userRaw);
+
+          // Ako backend vrati email_verified_at sa datumom → stavi jedinicu
+          if (data?.email_verified_at || user?.email_verified_at) {
+            user.is_verified = 1;
+            localStorage.setItem("is_verified", "1");
+          }
+
+          // Osveži user u LS
+          localStorage.setItem("user", JSON.stringify({
+            ...user,
+            ...(data || {}),
+          }));
+        }
+      } catch {}
+
+      f7.views.main.router.navigate("/home/", { reloadCurrent: true });
+      return;
+    }
+
+      // Ako nije ok, pokušaj pročitati poruku
+      let msg = "Invalid or expired verification link.";
+      try {
+        const data = await res.json();
+        if (data?.message) msg = data.message;
+      } catch {}
+      f7.dialog.alert(msg, "Verification failed");
+    } catch (e) {
+      f7.dialog.close();
+      f7.dialog.alert("Something went wrong during verification.", "Error");
+      // (opciono) možeš vratiti na login ili ostaviti korisnika ovde
+    }
+  };
 
   const resendEmail = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user?.email) {
       f7.dialog.alert("User not found in localStorage.", "Error");
       return;
     }
 
     f7.dialog.preloader("Sending...");
-
     fetch("http://localhost:8000/api/email/verification-notification", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ user }),
     })
@@ -72,10 +100,11 @@ const VerifyEmail = ({ f7router, f7route }) => {
       });
   };
 
-//   useEffect(() => {
-//     verifyEmail();
-//     // eslint-disable-next-line
-//   }, []);
+  useEffect(() => {
+    // Automatska verifikacija čim se ruta otvori
+    verifyEmail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Page name="verify-email" className="verify-email-page">
@@ -83,11 +112,8 @@ const VerifyEmail = ({ f7router, f7route }) => {
         <img className="login-logo" alt="logo" src={LogoImage} />
       </div>
       <div className="verify-email-container">
-        <h1>Check Your Email 📧</h1>
-        <p>
-          We’ve sent you a verification link. Please check your inbox to verify
-          your account.
-        </p>
+        <h1>Verifying your email…</h1>
+        <p>If nothing happens, you can resend the verification email.</p>
         <Button
           fill
           large

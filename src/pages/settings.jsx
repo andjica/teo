@@ -152,6 +152,8 @@ const Settings = ({ f7router }) => {
         // localStorage.setItem("user", data);
         localStorage.setItem("is_finished_profile", "1");
         setOriginalUser(user);
+
+        f7router.navigate("/home/");
       })
       .catch((err) => {
         console.error("Error saving user:", err);

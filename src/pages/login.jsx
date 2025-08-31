@@ -1,7 +1,8 @@
+// src/pages/login.jsx
 import React, { useEffect, useState } from "react";
-import { Page, Button, f7 } from "framework7-react";
+import { Page, Button, f7, Link } from "framework7-react";
 import logo from "@/assets/images/logo.png";
-import { get, post } from "@/js/helper/api";
+import { post /*, get */ } from "@/js/helper/api";
 import { isTokenExpired } from "@/js/helper/tokenExpired";
 
 const Login = ({ f7router }) => {
@@ -9,88 +10,92 @@ const Login = ({ f7router }) => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
 
-useEffect(() => {
-  if (!isTokenExpired()) {
-    // Token važi — preusmeri posle 2 sekunde
-    const timer = setTimeout(() => {
-      f7router.navigate('/home/');
-    }, 2000);
-    return () => clearTimeout(timer);
-  } else {
-    // Token je istekao ili ga nema — briši localStorage
-    localStorage.clear();
-  }
-}, [f7router]);
+  // Ako već postoji VALIDAN token i verified, pusti korisnika dalje
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const isVerified = localStorage.getItem("is_verified") === "1";
+    const userRaw = localStorage.getItem("user");
+    let user = null;
+    try { user = userRaw ? JSON.parse(userRaw) : null; } catch {}
 
+    const computedVerified = isVerified || !!user?.email_verified_at;
+
+    if (token && !isTokenExpired() && computedVerified) {
+      const t = setTimeout(() => f7router.navigate("/home/"), 300);
+      return () => clearTimeout(t);
+    }
+
+    // ❗ Ne briši ceo localStorage (sačuvaj device_type i sve ostalo)
+    ["token", "user", "is_verified"].forEach(k => localStorage.removeItem(k));
+  }, [f7router]);
 
   const validate = () => {
-    let valid = true;
-    const newErrors = { email: "", password: "" };
-
-    if (!email) {
-      newErrors.email = "Email is required.";
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Invalid email format.";
-      valid = false;
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required.";
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
+    let ok = true;
+    const e = { email: "", password: "" };
+    if (!email) { e.email = "Email is required."; ok = false; }
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { e.email = "Invalid email format."; ok = false; }
+    if (!password) { e.password = "Password is required."; ok = false; }
+    setErrors(e);
+    return ok;
   };
 
   const handleLogin = async () => {
-  if (!validate()) return;
+    if (!validate()) return;
 
-  try {
-    f7.dialog.preloader("Logging in...");
+    try {
+      f7.dialog.preloader("Logging in...");
 
-    // Login request
-    const data = await post("login", {
-      email,
-      password,
-    });
+      // 1) Login
+      const data = await post("login", { email, password });
+      f7.dialog.close();
 
-    f7.dialog.close();
+      const token = data.token;
+      const user  = data.user; // { id, device_type, is_verified, email_verified_at, ... }
+      const hash  = data.verification_hash;
 
-    // Store token and user
-    const token = data.token;
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+      // 2) Sačuvaj osnovno u LS
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-    // Check if email is verified
-    if (data.user?.email_verified_at) {
-      // Fetch is_finished_profile from backend
-      const isFinished = await get("user-info")
-        .then((res) => res.data?.is_finished_profile ?? 0)
-        .catch(() => 0);
+      // 3) Normalizuj flag verifikacije (1/0, true/false, ili email_verified_at timestamp)
+      const verified =
+        user.is_verified === 1 ||
+        user.is_verified === true ||
+        !!user.email_verified_at;
 
-      localStorage.setItem("is_finished_profile", isFinished.toString());
+      localStorage.setItem("is_verified", verified ? "1" : "0");
+      localStorage.setItem("device_type", user.device_type || "web");
 
-      if (isFinished.toString() === "1") {
-        f7router.navigate("/home/");
-      } else {
-        f7router.navigate("/settings/");
+      // 4) Grana na osnovu verifikacije i device tipa
+      if (!verified) {
+        if ((user.device_type || "web") === "mobile") {
+          // MOBILE → pošalji 4-cifreni kod pa vodi na verify-code
+          await fetch("http://localhost:8000/api/send-code", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          f7router.navigate("/verify-code/");
+        } else {
+          // WEB → pošalji verifikacioni link pa vodi na verify-email/:id/:hash
+          await post("email/verification-notification", { user_id: user.id });
+          // (opciono) sačuvaj hash ako koristiš u guard-u
+          if (hash) localStorage.setItem("verification_hash", hash);
+          f7router.navigate(`/verify-email/${user.id}/${hash || "0"}`);
+        }
+        return;
       }
-    } else {
-      const { id } = data.user;
-      const hash = data.verification_hash;
-      f7router.navigate(`/verify-email/${id}/${hash}`);
 
-      // Send verification email
-      await post("email/verification-notification", { user_id: id });
+      // 5) Već verifikovan → vodi na home
+      f7router.navigate("/home/");
+    } catch (err) {
+      f7.dialog.close();
+      console.error("Login error:", err);
+      f7.dialog.alert(err?.message || "Server error. Please try again later.");
     }
-  } catch (error) {
-    f7.dialog.close();
-    console.error("Login error:", error);
-    f7.dialog.alert(error.message || "Server error. Please try again later.");
-  }
-};
+  };
 
   return (
     <Page name="login" className="login-custom-page no-navbar no-toolbar">
@@ -117,9 +122,7 @@ useEffect(() => {
               name="email"
               autoComplete="email"
             />
-            {errors.email && (
-              <div className="error-message">{errors.email}</div>
-            )}
+            {errors.email && <div className="error-message">{errors.email}</div>}
 
             <input
               type="password"
@@ -130,9 +133,7 @@ useEffect(() => {
               name="password"
               autoComplete="current-password"
             />
-            {errors.password && (
-              <div className="error-message">{errors.password}</div>
-            )}
+            {errors.password && <div className="error-message">{errors.password}</div>}
 
             <Button fill large className="login-button" type="submit">
               Login
@@ -141,9 +142,7 @@ useEffect(() => {
 
           <div className="login-footer">
             <span>Create an account?</span>
-            <a href="/register/" className="signup-link">
-              Sign Up
-            </a>
+            <Link href="/register/" className="signup-link">Sign Up</Link>
           </div>
         </div>
       </div>

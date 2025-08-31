@@ -1,6 +1,7 @@
-import { Button, f7, Page } from "framework7-react";
-import { useState } from "react";
-import logo from "../assets/images/logo.png";
+// src/pages/register.jsx
+import React, { useState } from "react";
+import { Page, Button, f7, Link } from "framework7-react";
+import logo from "@/assets/images/logo.png";
 import { post } from "@/js/helper/api";
 import { validationUserRegister } from "@/js/helper/form-validation/user-register";
 
@@ -10,89 +11,100 @@ const Register = ({ f7router }) => {
     last_name: "",
     email: "",
     password: "",
-    errors: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      password: "",
-    },
+  });
+  const [errors, setErrors] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-      errors: { ...prev.errors, [name]: "" }, // Resetuje grešku za to polje
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleRegister = async () => {
-    const { first_name, last_name, email, password } = form;
-
-    const errors = validationUserRegister({
-      first_name,
-      last_name,
-      email,
-      password,
-    });
-
-    if (Object.keys(errors).length > 0) {
-      setForm((prev) => ({ ...prev, errors }));
+    // 1) lokalna validacija
+    const v = validationUserRegister(form);
+    if (Object.keys(v).length) {
+      setErrors(v);
       return;
     }
 
     try {
       f7.dialog.preloader("Registering...");
 
-      // ✅ API poziv bez nepotrebnog .json()
+      // odredi tip uređaja (po želji zameni dropdownom)
+      const isMobileUA = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+        navigator.userAgent
+      );
+      const device_type = isMobileUA ? "mobile" : "web";
+      // const device_type = "mobile"; // — ako želiš da forsiraš mobilni
+
+      console.log(navigator.userAgent);
+      // 2) backend register
       const data = await post("register", {
-        first_name,
-        last_name,
-        email,
-        password,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        password: form.password,
         role_id: 4,
+        device_type,
       });
 
       f7.dialog.close();
 
-      // ✅ Sačuvaj podatke
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("is_finished_profile", "0");
+      // 3) LS — identično kao u Login.jsx
+      const token = data.token;
+      const user = data.user;
 
-      const id = data.user.id;
-      const hash = data.verification_hash; // proveri da li se vraća ovo ili drugačije na backendu
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("device_type", user.device_type || device_type);
+      localStorage.setItem("is_verified", "0"); // tek napravljen — nije verifikovan
 
-      f7router.navigate(`/verify-email/${id}/${hash}`);
-    } catch (error) {
+      // 4) Grana po tipu uređaja
+      if ((user.device_type || device_type) === "mobile") {
+        // backend je već poslao 4‑cifreni kod; da ne šaljemo opet:
+        sessionStorage.setItem("codeSentOnce", "1");
+        f7router.navigate("/verify-code/");
+      } else {
+        // web – vodi na verify email rutu
+        const id = user.id;
+        const hash =
+          user.email_verification_token ||
+          data.verification_hash ||
+          ""; // fallback ako backend šalje pod drugim imenom
+        f7router.navigate(`/verify-email/${id}/${hash}`);
+      }
+    } catch (err) {
       f7.dialog.close();
 
-      if (error.message.includes("422")) {
-        // Laravel validation error
-        const err = JSON.parse(error.message);
-        const apiErrors = {
-          first_name: err.errors?.first_name?.[0] || "",
-          last_name: err.errors?.last_name?.[0] || "",
-          email: err.errors?.email?.[0] || "",
-          password: err.errors?.password?.[0] || "",
-        };
-        setForm((prev) => ({ ...prev, errors: apiErrors }));
-      } else {
-        console.error("Register error:", error);
-        f7.dialog.alert(error.message || "Registration failed.");
+      // Laravel 422 (validation) – u mom helperu post obično baca error.message sa JSON stringom
+      try {
+        const payload = JSON.parse(err.message || "{}");
+        if (payload?.errors) {
+          setErrors({
+            first_name: payload.errors.first_name?.[0] || "",
+            last_name: payload.errors.last_name?.[0] || "",
+            email: payload.errors.email?.[0] || "",
+            password: payload.errors.password?.[0] || "",
+          });
+          return;
+        }
+      } catch (_) {
+        // nije 422, samo pusti alert
       }
+
+      console.error("Register error:", err);
+      f7.dialog.alert(err?.message || "Registration failed.");
     }
   };
 
   return (
     <Page name="register" className="login-custom-page no-navbar no-toolbar">
-      {/* Inline CSS to hide toolbar */}
-      <style>{`
-        .toolbar.tabbar.toolbar-bottom.tabbar-icons.toolbar-transitioning{
-        display:none !important;}
-      `}</style>
-
       <div className="login-wrapper">
         <div className="login-top">
           <img src={logo} alt="Logo" className="login-logo" />
@@ -109,10 +121,8 @@ const Register = ({ f7router }) => {
             onChange={handleChange}
             className="login-input"
           />
-          {form.errors.first_name && (
-            <div className="error-message text-sm mb-2">
-              {form.errors.first_name}
-            </div>
+          {errors.first_name && (
+            <div className="error-message text-sm mb-2">{errors.first_name}</div>
           )}
 
           <input
@@ -123,10 +133,8 @@ const Register = ({ f7router }) => {
             onChange={handleChange}
             className="login-input"
           />
-          {form.errors.last_name && (
-            <div className="error-message text-sm mb-2">
-              {form.errors.last_name}
-            </div>
+          {errors.last_name && (
+            <div className="error-message text-sm mb-2">{errors.last_name}</div>
           )}
 
           <input
@@ -137,10 +145,8 @@ const Register = ({ f7router }) => {
             onChange={handleChange}
             className="login-input"
           />
-          {form.errors.email && (
-            <div className="error-message text-sm mb-2">
-              {form.errors.email}
-            </div>
+          {errors.email && (
+            <div className="error-message text-sm mb-2">{errors.email}</div>
           )}
 
           <input
@@ -151,26 +157,19 @@ const Register = ({ f7router }) => {
             onChange={handleChange}
             className="login-input"
           />
-          {form.errors.password && (
-            <div className="error-message text-sm mb-2">
-              {form.errors.password}
-            </div>
+          {errors.password && (
+            <div className="error-message text-sm mb-2">{errors.password}</div>
           )}
-          <Button
-            fill
-            large
-            className="login-button"
-            type="button"
-            onClick={handleRegister}
-          >
+
+          <Button fill large className="login-button" onClick={handleRegister}>
             Register
           </Button>
 
           <div className="login-footer">
             <span>Already have an account?</span>
-            <a href="/login/" className="signup-link">
+            <Link href="/login/" className="signup-link">
               Login
-            </a>
+            </Link>
           </div>
         </div>
       </div>
