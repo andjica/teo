@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   Block,
   BlockTitle,
@@ -7,8 +7,10 @@ import {
   Link,
   List,
   ListItem,
-  Page,
-  Popup,
+  Navbar,
+  NavLeft,
+  NavTitle,
+  NavRight,
   f7,
 } from "framework7-react";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -16,57 +18,26 @@ import { Pagination } from "swiper/modules";
 import { leftTime } from "@/js/helper/countdown";
 import { getImageUrl } from "@/js/helper/displayImage";
 
-export default function AuctionDetail({
-  auction,
-  open,
-  onClose,
-  onBidClick,
-  bidVal,
-  setBidVal,
-}) {
+export default function AuctionDetail({ auction, bidVal, setBidVal }) {
   const currency = "€";
 
-  useEffect(() => {
-    if (!auction || !auction.id || !auction.bids?.length) return;
-
-    const stored = JSON.parse(localStorage.getItem("bidAuctions") || "[]");
-
-    const newBidEntries = auction.bids.map((bid) => {
-      const isDuplicate = stored.some(
-        (b) =>
-          b.auctionId === auction.id &&
-          b.amount === bid.amount &&
-          b.user === bid.user
-      );
-      if (isDuplicate) return null;
-
-      return {
-        auctionId: auction.id,
-        name: auction.name,
-        amount: bid.amount,
-        user: bid.user,
-        time: new Date().toISOString(),
-      };
-    }).filter(Boolean);
-
-    const updated = [...stored, ...newBidEntries];
-    localStorage.setItem("bidAuctions", JSON.stringify(updated));
-  }, [auction?.id, auction?.bids]);
-
+  // --- lokalni bidovi ---
   const localStoredBids = useMemo(() => {
     const all = JSON.parse(localStorage.getItem("bidAuctions") || "[]");
     return all.filter((b) => b.auctionId === auction?.id);
   }, [auction?.id]);
 
+  // --- trenutna cena ---
   const currentBid = useMemo(() => {
     const allBids = [...(auction?.bids || []), ...localStoredBids];
     return allBids.length
       ? Math.max(...allBids.map((b) => parseFloat(b.amount)))
       : parseFloat(auction?.base_price || 0);
-  }, [auction?.bids, localStoredBids]);
+  }, [auction?.bids, localStoredBids, auction?.base_price]);
 
   if (!auction) return null;
 
+  // --- custom bid prompt ---
   const showCustomBidPrompt = () => {
     const dialog = f7.dialog.create({
       title: "Custom bid",
@@ -77,26 +48,23 @@ export default function AuctionDetail({
         </div>
       `,
       buttons: [
-        {
-          text: "Cancel",
-        },
+        { text: "Cancel" },
         {
           text: "OK",
           bold: true,
           onClick: (dialog) => {
             const input = dialog.el.querySelector("input").value;
             const value = parseFloat(input);
-
             if (!input || isNaN(value)) {
               f7.dialog.alert("Please enter a valid number.");
               return false;
             }
-
             if (value <= currentBid) {
-              f7.dialog.alert(`Value must be greater than ${currency}${currentBid}`);
+              f7.dialog.alert(
+                `Value must be greater than ${currency}${currentBid}`
+              );
               return false;
             }
-
             setBidVal(String(value));
           },
         },
@@ -107,152 +75,222 @@ export default function AuctionDetail({
         },
       },
     });
-
     dialog.open();
   };
 
+  // --- bidanje ---
+  const handleBidClick = async () => {
+    try {
+      const amountToSend = parseFloat(bidVal || currentBid);
+      const res = await fetch(
+        `http://localhost:8000/api/place-bid/${auction.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ amount: amountToSend }),
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 402 && data.requires_payment_setup) {
+        f7.dialog.confirm(
+          "Before bidding, please insert your payment card.",
+          async () => {
+            const setupRes = await fetch(
+              "http://localhost:8000/api/payment/create-setup",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+                body: JSON.stringify({
+                  context: "auction",
+                  entity_id: auction.id,
+                }),
+              }
+            );
+            const setupData = await setupRes.json();
+            if (setupRes.ok && setupData.checkout_url) {
+              window.location.href = setupData.checkout_url;
+            } else {
+              f7.dialog.alert("Could not start payment setup.");
+            }
+          }
+        );
+        return;
+      }
+
+      if (!res.ok) {
+        f7.dialog.alert(data.message || "Something went wrong.");
+        return;
+      }
+
+      if (data.success && data.data) {
+        const newBid = {
+          auctionId: auction.id,
+          name: auction.name,
+          amount: data.data.amount,
+          user: data.data.user?.first_name
+            ? `${data.data.user.first_name} ${data.data.user.last_name}`
+            : data.data.user || "You",
+          time: data.data.placed_at,
+        };
+
+        auction.bids = [newBid, ...(auction.bids || [])];
+        f7.dialog.alert("Your bid was placed successfully.");
+        setBidVal("");
+      }
+    } catch (err) {
+      console.error(err);
+      f7.dialog.alert("Error placing bid.");
+    }
+  };
+
   return (
-    <Popup opened={open} onPopupClosed={onClose} className="safe-areas">
-      <Page>
-        <Link
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            left: 16,
-            top: 14,
-            zIndex: 5,
-            fontSize: 24,
-            background: "#ede9e2",
-            borderRadius: "20px",
-          }}
-        >
-          <Icon f7="arrow_left" />
-        </Link>
+    <>
+      <Navbar>
+        <NavLeft>
+            <Link
+              back
+              onClick={(e) => {
+                e.preventDefault();
+                if (f7.views.main.router.history.length > 1) {
+                  f7.views.main.router.back();
+                } else {
+                  f7.views.main.router.navigate('/auctions/');
+                }
+              }}
+            >
+              <Icon f7="arrow_left" /> Back
+            </Link>
+          </NavLeft>
+        <NavTitle>{auction.name}</NavTitle>
+        <NavRight>
+          <Link>
+            <Icon f7="ellipsis" />
+          </Link>
+        </NavRight>
+      </Navbar>
 
-        <Swiper pagination modules={[Pagination]}>
-          {auction.images?.length > 0 ? (
-            auction.images.map((src, i) => (
-              <SwiperSlide key={i}>
-                <img
-                  src={getImageUrl(src?.image_url || src)}
-                  alt={`Auction image ${i + 1}`}
-                  style={{ width: "100%", height: 260, objectFit: "cover" }}
-                />
-              </SwiperSlide>
-            ))
-          ) : (
-            <SwiperSlide>
-              <div
-                style={{
-                  width: "100%",
-                  height: 260,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#eee",
-                  fontSize: 16,
-                  color: "#666",
-                }}
-              >
-                No images available
-              </div>
+      {/* Slike */}
+      <Swiper pagination modules={[Pagination]}>
+        {auction.images?.length > 0 ? (
+          auction.images.map((src, i) => (
+            <SwiperSlide key={i}>
+              <img
+                src={getImageUrl(src?.image_url || src)}
+                alt={`Auction image ${i + 1}`}
+                style={{ width: "100%", height: 260, objectFit: "cover" }}
+              />
             </SwiperSlide>
-          )}
-        </Swiper>
+          ))
+        ) : (
+          <SwiperSlide>
+            <div className="flex items-center justify-center w-full h-[260px] bg-gray-200 text-gray-600 text-lg">
+              No images available
+            </div>
+          </SwiperSlide>
+        )}
+      </Swiper>
 
-        <div
-          style={{
-            background: "#000",
-            color: "#fff",
-            borderTopLeftRadius: 32,
-            borderTopRightRadius: 32,
-            padding: "24px 20px 16px",
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: 24 }}>{auction.name}</h1>
+      {/* Info o aukciji */}
+      <div className="bg-black text-white rounded-t-[32px] p-6">
+        <h1 className="text-2xl font-semibold">{auction.name}</h1>
+      </div>
+
+      {/* Bid info */}
+      <Block strong noHairlines className="pt-0">
+        <div className="bg-white rounded-xl p-4 flex justify-between items-center shadow-md -mt-11">
+          <div className="w-[48%]">
+            <div className="text-sm text-gray-500">Starting price</div>
+            <p className="text-lg font-medium">
+              {currency}
+              {auction.base_price}
+            </p>
+          </div>
+          <div className="w-px h-[60px] bg-gray-300" />
+          <div className="w-[48%]">
+            <div className="text-sm text-gray-500">Current Bid Price</div>
+            <b className="text-lg">
+              {currency}
+              {currentBid}
+            </b>
+            <div className="flex items-center text-sm mt-2 text-gray-500">
+              <Icon f7="timer" size={16} className="mr-1" />
+              {leftTime(auction.auction_date)} remaining
+            </div>
+          </div>
         </div>
 
-        <Block strong noHairlines style={{ paddingTop: 0 }}>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              padding: 16,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              boxShadow: "0 3px 8px #dccab0",
-              marginTop: -44,
-            }}
-          >
-            <div style={{ width: "48%" }}>
-              <div className="text-small color-gray">Starting price</div>
-              <p style={{ fontSize: 18 }}>{currency}{auction.base_price}</p>
-            </div>
-            <div style={{ width: 1, height: 60, background: "#e5e5e5" }} />
-            <div style={{ width: "48%" }}>
-              <div className="text-small color-gray">Current Bid Price</div>
-              <b style={{ fontSize: 18 }}>{currency}{currentBid}</b>
-              <div className="flex items-center text-small mt-2 color-gray">
-                <Icon f7="timer" size={16} className="mr-1" />
-                {leftTime(auction.auction_date)} remaining
-              </div>
-            </div>
-          </div>
+        {/* Bid lista */}
+        <BlockTitle className="mt-4 flex justify-between items-center">
+          Live Auction
+          <span className="text-sm text-gray-500">
+            {auction.bids?.length || 0} bids
+          </span>
+        </BlockTitle>
 
-          <BlockTitle className="mt-4 flex justify-between items-center">
-            Live Auction
-            <span className="text-small color-gray">
-              {auction.bids?.length || 0} bids
-            </span>
-          </BlockTitle>
+        <List inset dividers>
+          {[...(auction.bids || []), ...localStoredBids]
+            .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
+            .map((b, i) => (
+              <ListItem
+                key={i}
+                title={
+                  typeof b.user === "object"
+                    ? `${b.user.first_name || ""} ${b.user.last_name || ""}`
+                    : b.user || "Unknown"
+                }
+                after={`€${b.amount}`}
+                footer={
+                  b.placed_at
+                    ? new Date(b.placed_at).toLocaleString()
+                    : b.time
+                    ? new Date(b.time).toLocaleString()
+                    : null
+                }
+              />
+            ))}
+        </List>
 
-          <List inset dividers>
-            {[...(auction.bids || []), ...localStoredBids]
-              .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount))
-              .map((b, i) => (
-                <ListItem
-                  key={i}
-                  title={b.user}
-                  after={`€${b.amount}`}
-                  footer={b.time ? new Date(b.time).toLocaleString() : null}
-                />
-              ))}
-          </List>
-
-          <div className="flex gap-2 mt-4 flex-wrap">
-            {[0.05, 0.1, 0.15].map((pct) => {
-              const inc = Math.round(currentBid * (1 + pct));
-              return (
-                <Button key={pct} small outline onClick={() => setBidVal(String(inc))}>
-                  {currency}{inc}
-                </Button>
-              );
-            })}
-            <Button small outline onClick={showCustomBidPrompt}>
-              custom bid
-            </Button>
-          </div>
-
-          <Button
-            large
-            fill
-            style={{
-              backgroundColor: "rgb(55 119 98)",
-              position: "fixed",
-              width: "92%",
-              left: "4%",
-              bottom: 17,
-              zIndex: 10,
-              borderRadius: 10,
-            }}
-            onClick={onBidClick}
-            disabled={!bidVal}
-          >
-            Place Bid for&nbsp;{currency}{bidVal || currentBid}
+        {/* Dugmići za povećanje */}
+        <div className="flex gap-2 mt-4 flex-wrap">
+          {[0.05, 0.1, 0.15].map((pct) => {
+            const inc = Math.round(currentBid * (1 + pct));
+            return (
+              <Button
+                key={pct}
+                small
+                outline
+                onClick={() => setBidVal(String(inc))}
+              >
+                {currency}
+                {inc}
+              </Button>
+            );
+          })}
+          <Button small outline onClick={showCustomBidPrompt}>
+            custom bid
           </Button>
-        </Block>
-      </Page>
-    </Popup>
+        </div>
+
+        {/* Dugme place bid */}
+        <Button
+          large
+          fill
+          className="bg-emerald-700 hover:bg-emerald-800 rounded-lg fixed w-[92%] left-[4%] bottom-4 z-10"
+          onClick={handleBidClick}
+          disabled={!bidVal}
+        >
+          Place Bid for {currency}
+          {bidVal || currentBid}
+        </Button>
+      </Block>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 import { Link, Toolbar } from "framework7-react";
-import React from "react";
 
 const Footer = () => {
   return (

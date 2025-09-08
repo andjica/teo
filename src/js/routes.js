@@ -17,8 +17,14 @@ import HomePage from '../pages/home.jsx';
 import NewProductsPage from "../pages/NewProducts.jsx";
 import SecondHandProductsPage from "../pages/SecondHandProducts.jsx";
 import VerifyCode from '../pages/verify-code.jsx';
-
+import PaymentSettings from '../pages/settingsPayment.jsx';
+import PaymentSuccess from '../pages/paymentSuccess.jsx';
+import AukcijaPage from '../pages/aukcija.jsx';
 var routes = [
+  {
+    path: '/',
+    component: HomePage,
+  },
   {
     path: '/login/',
     component: LoginPage,
@@ -39,6 +45,7 @@ var routes = [
     path:'/verify-success/',
     component: VerifySuccess,
   },
+,
   {
     path: '/home/',
     component: HomePage,
@@ -55,9 +62,11 @@ var routes = [
     path: '/checkout/',
     component: CheckoutPage,
   },
+ { path: '/auctions/', component: AuctionsPage, name: 'auctions' },
   {
-    path: '/auctions/',
-    component: AuctionsPage,
+    path: '/aukcija/:id/:status?',
+    name: 'aukcija',
+    component: AukcijaPage,
   },
   {
     path: '/about/',
@@ -79,7 +88,14 @@ var routes = [
     path: '/settings/',
     component: SettingsPage,
   },
-
+  {
+      path: '/settings/payment',
+      component: PaymentSettings,
+  },
+  {
+      path: '/payment-success/',
+      component: PaymentSuccess,
+  },
   {
     path: '/dynamic-route/blog/:blogId/post/:postId/',
     component: DynamicRoutePage,

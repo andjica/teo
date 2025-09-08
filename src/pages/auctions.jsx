@@ -6,57 +6,25 @@ import { getImageUrl } from "@/js/helper/displayImage";
 import {
   Block,
   BlockTitle,
-  Button,
   Card,
   CardContent,
-  f7,
   Icon,
   Link,
-  List,
-  ListInput,
-  ListItem,
   Navbar,
   NavLeft,
   NavRight,
   NavTitle,
   Page,
-  Popup,
 } from "framework7-react";
-import React, { useEffect, useMemo, useState } from "react";
-import "swiper/css";
-import "swiper/css/pagination";
-import { Pagination } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { useEffect, useMemo, useState } from "react";
 import { isToday } from "@/js/helper/customeDate";
-import AuctionDetail from "@/components/auction/AuctionDetail";
 import Footer from "@/components/Footer";
-
-/* ---------- demo aukcije ---------- */
-// const initAuctions = [
-//   {
-//     id: 1,
-//     category: 'Equipment',
-//     name: 'Satelec P5 Scaler',
-//     brand: 'Acteon',
-//     images: ['https://focusdental.hr/wp-content/uploads/2023/12/surgical-microscope.jpg'],
-//     endsAt: Date.now() + 1000 * 60 * 60 * 3,
-//     currentBid: 420,
-//     bids: [{ user: 'Ana', amount: 420 }],
-//     currency: '€',
-//   },
-// ];
 
 export default function Auctions() {
   const [aucs, setAucs] = useState([]);
-  const [currentAuction, setCurrentAuction] = useState(null);
   const [categories, setCategories] = useState([]);
   const [activeCat, setActiveCat] = useState("All");
   const [tick, setTick] = useState(0);
-  const [selectedBrand, setSelectedBrand] = useState("All");
-
-  /* popup state */
-  const [open, setOpen] = useState(false);
-  const [bidVal, setBidVal] = useState("");
 
   /* sekundni rerender za countdown */
   useEffect(() => {
@@ -67,6 +35,10 @@ export default function Auctions() {
   useEffect(() => {
     fetchAuction();
     fetchCategory();
+
+    // očisti history da ne ostane home
+   
+
   }, []);
 
   const fetchAuction = async () => {
@@ -74,7 +46,7 @@ export default function Auctions() {
       const response = await get("auctions");
       setAucs(response.data);
     } catch (err) {
-      console.error("Error fetching auctione:", err.message);
+      console.error("Error fetching auctions:", err.message);
     }
   };
 
@@ -87,54 +59,10 @@ export default function Auctions() {
     }
   };
 
-  const fetchAuctionById = async (auctionId) => {
-    try {
-      const response = await get(`auction/${auctionId}`);
-      setCurrentAuction(response.data);
-      setOpen(true);
-    } catch (err) {
-      console.error("Error fetching auctione by id:", err.message);
-    }
-  }
-
   /* filtriraj */
   const view = useMemo(() => {
     return aucs.filter((a) => activeCat === "All" || a.category === activeCat);
   }, [aucs, activeCat]);
-
-  /* handle bid */
-  const placeBid = () => {
-    const val = parseFloat(bidVal);
-    if (isNaN(val) || val <= currentAuction.currentBid) {
-      f7.dialog.alert("The bid must be higher than the current price.");
-      return;
-    }
-    f7.dialog.confirm(`Confirm bid from €${val}?`, () => {
-      setAucs((list) =>
-        list.map((a) =>
-          a.id === currentAuction.id
-            ? {
-                ...a,
-                currentBid: val,
-                bids: [...(a.bids || []), { user: "YOU", amount: val }],
-              }
-            : a
-        )
-      );
-      setCurrentAuction((c) => ({
-        ...c,
-        currentBid: val,
-        bids: [...(c.bids || []), { user: "YOU", amount: val }],
-      }));
-      setBidVal("");
-      f7.toast.show({ text: "Bid placed", closeTimeout: 1500 });
-    });
-  };
-  
-  // const filteredAuctions =
-  //   selectedBrand === "All"
-  //     ? aucs
-  //     : aucs.filter((a) => a.brand === selectedBrand);
 
   /* ---------- UI ---------- */
   return (
@@ -178,7 +106,7 @@ export default function Auctions() {
           <Card
             key={a.id}
             style={{
-              width: "calc(50% - 8px)", // 2 u redu, sa razmakom (gap/2)
+              width: "calc(50% - 8px)", // 2 u redu
               borderRadius: 16,
               overflow: "hidden",
               boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
@@ -226,35 +154,21 @@ export default function Auctions() {
                 className="flex justify-between items-end mt-4"
                 style={{ alignItems: "center" }}
               >
-                <Button
-                  small
-                  fill
-                  style={{
-                    backgroundColor: "#377762",
-                    color: "#fff",
-                    borderRadius: 8,
-                    padding: "6px 12px",
-                    fontSize: 14,
-                  }}
-                  onClick={() => fetchAuctionById(a.id)}
-                >
-                  Enter
-                </Button>
+
+              <Link
+                className="button button-fill"
+                href={`/aukcija/${a.id}/neutral`}
+              >
+                Otvori detalj
+              </Link>
+
+
               </div>
             </CardContent>
           </Card>
         ))}
       </Block>
-      {/* --------- POPUP DETAIL --------- */}
-      {/* ---------- POP-UP DETAIL ---------- */}
-      <AuctionDetail
-        auction={currentAuction}
-        open={open}
-        onClose={() => setOpen(false)}
-        onBidClick={placeBid}
-        bidVal={bidVal}
-        setBidVal={setBidVal}
-      />
+
       <Footer />
     </Page>
   );
