@@ -14,7 +14,7 @@ const API = (url, method = "GET", body = null) => {
     options.body = JSON.stringify(body);
   }
 
-  return fetch(`http://localhost:8000/api/${url}`, options).then(async (res) => {
+  return fetch(`http://164.92.209.125:5174/api/${url}`, options).then(async (res) => {
     if (res.status === 401) {
       window.dispatchEvent(new Event("tokenExpired"));
       throw new Error("Unauthorized");

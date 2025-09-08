@@ -83,7 +83,7 @@ export default function AuctionDetail({ auction, bidVal, setBidVal }) {
     try {
       const amountToSend = parseFloat(bidVal || currentBid);
       const res = await fetch(
-        `http://localhost:8000/api/place-bid/${auction.id}`,
+        `http://164.92.209.125:5174/api/place-bid/${auction.id}`,
         {
           method: "POST",
           headers: {
@@ -101,7 +101,7 @@ export default function AuctionDetail({ auction, bidVal, setBidVal }) {
           "Before bidding, please insert your payment card.",
           async () => {
             const setupRes = await fetch(
-              "http://localhost:8000/api/payment/create-setup",
+              "http://164.92.209.125:5174/api/payment/create-setup",
               {
                 method: "POST",
                 headers: {

@@ -16,7 +16,7 @@ const VerifyEmail = ({ f7router, f7route }) => {
 
       // Ako koristiš helper za bazni URL, zameni localhost bazom iz helpera
       const res = await fetch(
-        `http://localhost:8000/api/email/verify/${id}/${hash}${query}`,
+        `http://164.92.209.125:5174/api/email/verify/${id}/${hash}${query}`,
         {
           method: "GET",
           headers: {
@@ -77,7 +77,7 @@ const VerifyEmail = ({ f7router, f7route }) => {
     }
 
     f7.dialog.preloader("Sending...");
-    fetch("http://localhost:8000/api/email/verification-notification", {
+    fetch("http://164.92.209.125:5174/api/email/verification-notification", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
