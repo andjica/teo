@@ -70,7 +70,7 @@ const Login = ({ f7router }) => {
       if (!verified) {
         if ((user.device_type || "web") === "mobile") {
           // MOBILE → pošalji 4-cifreni kod pa vodi na verify-code
-          await fetch("http://164.92.209.125:5174/api/send-code", {
+          await fetch("http://164.92.209.125:8000/api/send-code", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

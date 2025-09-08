@@ -33,7 +33,7 @@ const VerifyCode = ({ f7router }) => {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://164.92.209.125:5174/api/verify-mobile-code", {
+      const res = await fetch("http://164.92.209.125:8000/api/verify-mobile-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +117,7 @@ const VerifyCode = ({ f7router }) => {
   const resendCode = async (auto = false) => {
     if (verifiedRef.current) return; // ne šalji ako je već verifikovano
     try {
-      const res = await fetch("http://164.92.209.125:5174/api/send-code", {
+      const res = await fetch("http://164.92.209.125:8000/api/send-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
